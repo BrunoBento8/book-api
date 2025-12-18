@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
 from app.api.v1 import health, books, categories, stats, auth, scraping, ml
+from app.utils.middleware import LoggingMiddleware
 
 # Create FastAPI application
 app = FastAPI(
@@ -20,6 +21,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Add logging middleware
+app.add_middleware(LoggingMiddleware)
 
 # Include routers
 app.include_router(health.router, prefix="/api/v1", tags=["Health"])
