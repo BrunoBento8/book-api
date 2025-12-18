@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: book-recommendation-api
+    env: python
+    region: oregon
+    plan: free
+    branch: feat-adding-api
+    buildCommand: |
+      pip install -r requirements.txt
+      python scripts/migrate_csv_to_db.py
+      python scripts/create_admin_user.py
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: APP_NAME
+        value: Book Recommendation API
+      - key: APP_VERSION
+        value: "1.0.0"
+      - key: ENVIRONMENT
+        value: production
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        value: sqlite:///./data/books.db
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: REFRESH_TOKEN_EXPIRE_DAYS
+        value: "7"
+      - key: ALLOWED_ORIGINS
+        value: '["*"]'
+      - key: ADMIN_USERNAME
+        value: admin
+      - key: ADMIN_EMAIL
+        value: admin@bookapi.com
+      - key: ADMIN_PASSWORD
+        sync: false
+    disk:
+      name: data-disk
+      mountPath: /opt/render/project/src/data
+      sizeGB: 1
