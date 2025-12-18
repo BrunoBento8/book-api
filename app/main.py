@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api.v1 import health, books, categories, stats, auth, scraping
+from app.api.v1 import health, books, categories, stats, auth, scraping, ml
 
 # Create FastAPI application
 app = FastAPI(
@@ -28,6 +28,7 @@ app.include_router(categories.router, prefix="/api/v1", tags=["Categories"])
 app.include_router(stats.router, prefix="/api/v1", tags=["Statistics"])
 app.include_router(auth.router, prefix="/api/v1", tags=["Authentication"])
 app.include_router(scraping.router, prefix="/api/v1", tags=["Admin"])
+app.include_router(ml.router, prefix="/api/v1", tags=["ML Pipeline"])
 
 
 @app.get("/")
