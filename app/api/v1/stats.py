@@ -10,13 +10,13 @@ router = APIRouter()
 @router.get("/stats/overview", response_model=OverviewStats)
 async def get_overview_statistics(db: Session = Depends(get_db)):
     """
-    Get overview statistics for the entire book collection
+    Obtém estatísticas gerais para toda a coleção de livros
 
-    Returns:
-    - Total number of books
-    - Average price across all books
-    - Distribution of ratings (count per rating 1-5)
-    - Total number of categories
+    Retorna:
+    - Número total de livros
+    - Preço médio de todos os livros
+    - Distribuição de avaliações (contagem por avaliação 1-5)
+    - Número total de categorias
     """
     stats = stats_service.get_overview_stats(db)
 
@@ -26,14 +26,14 @@ async def get_overview_statistics(db: Session = Depends(get_db)):
 @router.get("/stats/categories", response_model=CategoryStatsResponse)
 async def get_category_statistics(db: Session = Depends(get_db)):
     """
-    Get detailed statistics for each category
+    Obtém estatísticas detalhadas para cada categoria
 
-    Returns statistics for each category including:
-    - Number of books
-    - Average price
-    - Average rating
+    Retorna estatísticas para cada categoria incluindo:
+    - Número de livros
+    - Preço médio
+    - Avaliação média
 
-    Categories are sorted by book count (descending)
+    Categorias são ordenadas por contagem de livros (decrescente)
     """
     category_stats = stats_service.get_category_stats(db)
 

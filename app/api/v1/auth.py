@@ -21,39 +21,39 @@ async def login(
     db: Session = Depends(get_db)
 ):
     """
-    Login endpoint - Authenticate user and return JWT tokens
+    Endpoint de login - Autentica usuário e retorna tokens JWT
 
-    **OAuth2 compatible** - uses form data (username/password)
+    **Compatível com OAuth2** - usa dados de formulário (username/password)
 
-    Returns:
-    - **access_token**: Short-lived token for API access (30 minutes)
-    - **refresh_token**: Long-lived token to obtain new access tokens (7 days)
-    - **token_type**: Always "bearer"
+    Retorna:
+    - **access_token**: Token de curta duração para acesso à API (30 minutos)
+    - **refresh_token**: Token de longa duração para obter novos access tokens (7 dias)
+    - **token_type**: Sempre "bearer"
 
-    Example usage:
+    Exemplo de uso:
     ```
     curl -X POST "http://localhost:8000/api/v1/auth/login" \\
          -H "Content-Type: application/x-www-form-urlencoded" \\
          -d "username=admin&password=admin123"
     ```
     """
-    # Authenticate user
+    # Autentica usuário
     user = auth_service.authenticate_user(db, form_data.username, form_data.password)
 
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
+            detail="Nome de usuário ou senha incorretos",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="User account is inactive"
+            detail="Conta de usuário está inativa"
         )
 
-    # Create tokens
+    # Cria tokens
     access_token = create_access_token(data={"sub": user.username})
     refresh_token = create_refresh_token(data={"sub": user.username})
 
@@ -70,29 +70,29 @@ async def refresh_token(
     db: Session = Depends(get_db)
 ):
     """
-    Refresh access token using a refresh token
+    Atualiza access token usando um refresh token
 
-    Use this endpoint when the access token expires to get a new one
-    without requiring the user to log in again.
+    Use este endpoint quando o access token expirar para obter um novo
+    sem exigir que o usuário faça login novamente.
 
-    **Request body:**
+    **Corpo da requisição:**
     ```json
     {
-        "refresh_token": "your_refresh_token_here"
+        "refresh_token": "seu_refresh_token_aqui"
     }
     ```
 
-    **Returns:**
-    - New access_token and refresh_token pair
+    **Retorna:**
+    - Novo par de access_token e refresh_token
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate refresh token",
+        detail="Não foi possível validar o refresh token",
         headers={"WWW-Authenticate": "Bearer"},
     )
 
     try:
-        # Decode and validate refresh token
+        # Decodifica e valida refresh token
         payload = decode_token(refresh_request.refresh_token)
         username: str = payload.get("sub")
         token_type: str = payload.get("type")
@@ -103,13 +103,13 @@ async def refresh_token(
     except Exception:
         raise credentials_exception
 
-    # Verify user still exists and is active
+    # Verifica se o usuário ainda existe e está ativo
     user = auth_service.get_user_by_username(db, username)
 
     if user is None or not user.is_active:
         raise credentials_exception
 
-    # Create new tokens
+    # Cria novos tokens
     access_token = create_access_token(data={"sub": user.username})
     new_refresh_token = create_refresh_token(data={"sub": user.username})
 
@@ -125,11 +125,11 @@ async def get_current_user_info(
     current_user: User = Depends(get_current_user)
 ):
     """
-    Get current authenticated user information
+    Obtém informações do usuário autenticado atual
 
-    Requires valid access token in Authorization header:
+    Requer access token válido no cabeçalho Authorization:
     ```
-    Authorization: Bearer your_access_token_here
+    Authorization: Bearer seu_access_token_aqui
     ```
     """
     return UserResponse.model_validate(current_user)

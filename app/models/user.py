@@ -4,7 +4,7 @@ from app.database import Base
 
 
 class User(Base):
-    """User model for authentication and authorization"""
+    """Modelo de usuário para autenticação e autorização"""
 
     __tablename__ = "users"
 

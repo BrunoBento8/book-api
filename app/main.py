@@ -4,16 +4,16 @@ from app.config import settings
 from app.api.v1 import health, books, categories, stats, auth, scraping, ml
 from app.utils.middleware import LoggingMiddleware
 
-# Create FastAPI application
+# Cria aplicação FastAPI
 app = FastAPI(
     title=settings.APP_NAME,
     version=settings.APP_VERSION,
-    description="Book Recommendation API - Tech Challenge Phase 1",
+    description="API de Recomendação de Livros - Tech Challenge Fase 1",
     docs_url="/docs",
     redoc_url="/redoc"
 )
 
-# Configure CORS
+# Configura CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS if settings.ALLOWED_ORIGINS != ["*"] else ["*"],
@@ -22,24 +22,24 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Add logging middleware
+# Adiciona middleware de logging
 app.add_middleware(LoggingMiddleware)
 
-# Include routers
-app.include_router(health.router, prefix="/api/v1", tags=["Health"])
-app.include_router(books.router, prefix="/api/v1", tags=["Books"])
-app.include_router(categories.router, prefix="/api/v1", tags=["Categories"])
-app.include_router(stats.router, prefix="/api/v1", tags=["Statistics"])
-app.include_router(auth.router, prefix="/api/v1", tags=["Authentication"])
+# Inclui routers
+app.include_router(health.router, prefix="/api/v1", tags=["Saúde"])
+app.include_router(books.router, prefix="/api/v1", tags=["Livros"])
+app.include_router(categories.router, prefix="/api/v1", tags=["Categorias"])
+app.include_router(stats.router, prefix="/api/v1", tags=["Estatísticas"])
+app.include_router(auth.router, prefix="/api/v1", tags=["Autenticação"])
 app.include_router(scraping.router, prefix="/api/v1", tags=["Admin"])
-app.include_router(ml.router, prefix="/api/v1", tags=["ML Pipeline"])
+app.include_router(ml.router, prefix="/api/v1", tags=["Pipeline ML"])
 
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information"""
+    """Endpoint raiz com informações da API"""
     return {
-        "message": "Welcome to Book Recommendation API",
+        "message": "Bem-vindo à API de Recomendação de Livros",
         "version": settings.APP_VERSION,
         "docs": "/docs",
         "health": "/api/v1/health"
@@ -48,13 +48,13 @@ async def root():
 
 @app.on_event("startup")
 async def startup_event():
-    """Run on application startup"""
-    print(f"🚀 Starting {settings.APP_NAME} v{settings.APP_VERSION}")
-    print(f"📝 Environment: {settings.ENVIRONMENT}")
-    print(f"📚 API documentation available at: /docs")
+    """Executado ao iniciar a aplicação"""
+    print(f"🚀 Iniciando {settings.APP_NAME} v{settings.APP_VERSION}")
+    print(f"📝 Ambiente: {settings.ENVIRONMENT}")
+    print(f"📚 Documentação da API disponível em: /docs")
 
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Run on application shutdown"""
-    print(f"👋 Shutting down {settings.APP_NAME}")
+    """Executado ao encerrar a aplicação"""
+    print(f"👋 Encerrando {settings.APP_NAME}")

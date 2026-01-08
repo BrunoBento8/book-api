@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-CSV to SQLite Migration Script
-Migrates book data from CSV file to SQLite database
+Script de Migração CSV para SQLite
+Migra dados de livros do arquivo CSV para o banco de dados SQLite
 """
 import os
 import sys
 import pandas as pd
 from pathlib import Path
 
-# Add parent directory to path to import app modules
+# Adiciona o diretório pai ao path para importar módulos da aplicação
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import engine, SessionLocal, Base
@@ -18,40 +18,40 @@ from app.models.api_log import APILog
 
 
 def migrate_books_from_csv():
-    """Migrate books from CSV to SQLite database"""
+    """Migra livros do CSV para o banco de dados SQLite"""
 
-    # File paths
+    # Caminhos dos arquivos
     csv_path = Path(__file__).parent.parent / "data" / "books.csv"
 
     if not csv_path.exists():
-        print(f"❌ Error: CSV file not found at {csv_path}")
+        print(f"❌ Erro: Arquivo CSV não encontrado em {csv_path}")
         return False
 
-    print(f"📁 Reading CSV from: {csv_path}")
+    print(f"📁 Lendo CSV de: {csv_path}")
 
-    # Read CSV
+    # Lê o CSV
     try:
         df = pd.read_csv(csv_path)
-        print(f"✅ Successfully read {len(df)} books from CSV")
+        print(f"✅ {len(df)} livros lidos com sucesso do CSV")
     except Exception as e:
-        print(f"❌ Error reading CSV: {e}")
+        print(f"❌ Erro ao ler CSV: {e}")
         return False
 
-    # Create all tables
-    print("🔧 Creating database tables...")
+    # Cria todas as tabelas
+    print("🔧 Criando tabelas do banco de dados...")
     try:
         Base.metadata.create_all(bind=engine)
-        print("✅ Database tables created successfully")
+        print("✅ Tabelas do banco de dados criadas com sucesso")
     except Exception as e:
-        print(f"❌ Error creating tables: {e}")
+        print(f"❌ Erro ao criar tabelas: {e}")
         return False
 
-    # Insert books into database
-    print("📚 Inserting books into database...")
+    # Insere livros no banco de dados
+    print("📚 Inserindo livros no banco de dados...")
     db = SessionLocal()
 
     try:
-        # Clear existing books (optional - for clean migration)
+        # Limpa livros existentes (opcional - para migração limpa)
         db.query(Book).delete()
         db.commit()
 
@@ -70,16 +70,16 @@ def migrate_books_from_csv():
             inserted_count += 1
 
         db.commit()
-        print(f"✅ Successfully inserted {inserted_count} books into database")
+        print(f"✅ {inserted_count} livros inseridos com sucesso no banco de dados")
 
-        # Verify insertion
+        # Verifica a inserção
         total_books = db.query(Book).count()
-        print(f"📊 Total books in database: {total_books}")
+        print(f"📊 Total de livros no banco de dados: {total_books}")
 
         return True
 
     except Exception as e:
-        print(f"❌ Error inserting books: {e}")
+        print(f"❌ Erro ao inserir livros: {e}")
         db.rollback()
         return False
     finally:
@@ -87,7 +87,7 @@ def migrate_books_from_csv():
 
 
 def print_summary():
-    """Print database summary"""
+    """Imprime resumo do banco de dados"""
     db = SessionLocal()
     try:
         total_books = db.query(Book).count()
@@ -95,28 +95,28 @@ def print_summary():
         avg_price = db.query(Book.price).scalar()
 
         print("\n" + "=" * 50)
-        print("📊 DATABASE SUMMARY")
+        print("📊 RESUMO DO BANCO DE DADOS")
         print("=" * 50)
-        print(f"Total Books: {total_books}")
-        print(f"Total Categories: {total_categories}")
-        print(f"Database: {engine.url}")
+        print(f"Total de Livros: {total_books}")
+        print(f"Total de Categorias: {total_categories}")
+        print(f"Banco de Dados: {engine.url}")
         print("=" * 50)
 
     except Exception as e:
-        print(f"❌ Error getting summary: {e}")
+        print(f"❌ Erro ao obter resumo: {e}")
     finally:
         db.close()
 
 
 if __name__ == "__main__":
-    print("\n🚀 Starting CSV to SQLite migration...")
+    print("\n🚀 Iniciando migração de CSV para SQLite...")
     print("=" * 50)
 
     success = migrate_books_from_csv()
 
     if success:
         print_summary()
-        print("\n✅ Migration completed successfully!")
+        print("\n✅ Migração concluída com sucesso!")
     else:
-        print("\n❌ Migration failed!")
+        print("\n❌ Migração falhou!")
         sys.exit(1)

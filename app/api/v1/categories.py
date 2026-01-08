@@ -10,9 +10,9 @@ router = APIRouter()
 @router.get("/categories", response_model=list[CategoryResponse])
 async def get_categories(db: Session = Depends(get_db)):
     """
-    Get all unique book categories with counts
+    Obtém todas as categorias únicas de livros com contagens
 
-    Returns a list of categories sorted by book count (descending)
+    Retorna uma lista de categorias ordenadas por contagem de livros (decrescente)
     """
     categories = book_service.get_categories(db)
 

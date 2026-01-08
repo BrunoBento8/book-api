@@ -3,23 +3,23 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from app.config import settings
 
-# Create SQLAlchemy engine
+# Cria engine do SQLAlchemy
 engine = create_engine(
     settings.DATABASE_URL,
-    connect_args={"check_same_thread": False}  # Needed for SQLite
+    connect_args={"check_same_thread": False}  # Necessário para SQLite
 )
 
-# Create SessionLocal class
+# Cria classe SessionLocal
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create Base class for models
+# Cria classe Base para modelos
 Base = declarative_base()
 
 
 def get_db():
     """
-    Dependency for database sessions.
-    Yields a database session and closes it when done.
+    Dependência para sessões de banco de dados.
+    Retorna uma sessão de banco de dados e a fecha quando concluída.
     """
     db = SessionLocal()
     try:

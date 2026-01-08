@@ -10,18 +10,18 @@ router = APIRouter()
 @router.get("/health")
 async def health_check(db: Session = Depends(get_db)):
     """
-    Health check endpoint
-    Verifies API and database connectivity
+    Endpoint de verificação de saúde
+    Verifica conectividade da API e banco de dados
     """
     try:
-        # Test database connection
+        # Testa conexão com banco de dados
         db.execute(text("SELECT 1"))
-        db_status = "connected"
+        db_status = "conectado"
     except Exception as e:
-        db_status = f"error: {str(e)}"
+        db_status = f"erro: {str(e)}"
 
     return {
-        "status": "healthy",
+        "status": "saudável",
         "app_name": settings.APP_NAME,
         "version": settings.APP_VERSION,
         "environment": settings.ENVIRONMENT,

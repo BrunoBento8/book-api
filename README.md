@@ -623,10 +623,7 @@ Para questões e suporte:
 - FIAP Pós Tech - Machine Learning Engineering
 - Books to Scrape - Fonte dos dados
 - FastAPI Community
-- Claude Code - Assistente de desenvolvimento
 
 ---
 
 **Desenvolvido com ❤️ para o Tech Challenge - FIAP 2025**
-
-🤖 *Generated with [Claude Code](https://claude.com/claude-code)*

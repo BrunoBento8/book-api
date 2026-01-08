@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Create Admin User Script
-Creates an admin user for the application
+Script de Criação de Usuário Administrador
+Cria um usuário administrador para a aplicação
 """
 import sys
 from pathlib import Path
 
-# Add parent directory to path to import app modules
+# Adiciona o diretório pai ao path para importar os módulos da aplicação
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from app.database import SessionLocal, Base, engine
@@ -16,27 +16,27 @@ from app.config import settings
 
 
 def create_admin_user():
-    """Create admin user from environment variables"""
+    """Cria usuário administrador a partir das variáveis de ambiente"""
 
-    print("🔧 Creating database tables if not exist...")
+    print("🔧 Criando tabelas do banco de dados se não existirem...")
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()
 
     try:
-        # Check if admin user already exists
+        # Verifica se o usuário admin já existe
         existing_admin = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
 
         if existing_admin:
-            print(f"⚠️  Admin user '{settings.ADMIN_USERNAME}' already exists!")
-            print(f"   User ID: {existing_admin.id}")
+            print(f"⚠️  Usuário administrador '{settings.ADMIN_USERNAME}' já existe!")
+            print(f"   ID do Usuário: {existing_admin.id}")
             print(f"   Email: {existing_admin.email}")
-            print(f"   Is Admin: {existing_admin.is_admin}")
-            print(f"   Is Active: {existing_admin.is_active}")
+            print(f"   É Admin: {existing_admin.is_admin}")
+            print(f"   Está Ativo: {existing_admin.is_active}")
             return
 
-        # Create new admin user
-        # Truncate password to 72 bytes for bcrypt compatibility
+        # Cria novo usuário administrador
+        # Trunca a senha para 72 bytes para compatibilidade com bcrypt
         password = settings.ADMIN_PASSWORD[:72]
         admin = User(
             username=settings.ADMIN_USERNAME,
@@ -51,21 +51,21 @@ def create_admin_user():
         db.refresh(admin)
 
         print("\n" + "=" * 50)
-        print("✅ Admin user created successfully!")
+        print("✅ Usuário administrador criado com sucesso!")
         print("=" * 50)
-        print(f"Username: {admin.username}")
+        print(f"Usuário: {admin.username}")
         print(f"Email: {admin.email}")
-        print(f"Password: {settings.ADMIN_PASSWORD}")
-        print(f"Is Admin: {admin.is_admin}")
-        print(f"User ID: {admin.id}")
+        print(f"Senha: {settings.ADMIN_PASSWORD}")
+        print(f"É Admin: {admin.is_admin}")
+        print(f"ID do Usuário: {admin.id}")
         print("=" * 50)
-        print("\n💡 You can now login with these credentials:")
+        print("\n💡 Você pode fazer login com estas credenciais:")
         print(f"   POST /api/v1/auth/login")
         print(f"   username={admin.username}&password={settings.ADMIN_PASSWORD}")
         print()
 
     except Exception as e:
-        print(f"❌ Error creating admin user: {e}")
+        print(f"❌ Erro ao criar usuário administrador: {e}")
         db.rollback()
         sys.exit(1)
     finally:
@@ -73,6 +73,6 @@ def create_admin_user():
 
 
 if __name__ == "__main__":
-    print("\n🚀 Admin User Creation Script")
+    print("\n🚀 Script de Criação de Usuário Administrador")
     print("=" * 50)
     create_admin_user()
