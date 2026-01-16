@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import OperationalError
 from app.database import get_db
 from app.schemas.auth import Token, RefreshTokenRequest, UserResponse
 from app.services.auth_service import auth_service
@@ -11,6 +12,10 @@ from app.utils.security import (
     get_current_user
 )
 from app.models.user import User
+from app.config import settings
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -34,34 +39,82 @@ async def login(
     ```
     curl -X POST "http://localhost:8000/api/v1/auth/login" \\
          -H "Content-Type: application/x-www-form-urlencoded" \\
-         -d "username=admin&password=admin123"
+         -d "username=admin&password=Admin@123"
     ```
     """
-    # Autentica usuário
-    user = auth_service.authenticate_user(db, form_data.username, form_data.password)
+    try:
+        # Log início da tentativa de login (sem expor senha)
+        logger.info(f"Login attempt for username: {form_data.username}")
 
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Nome de usuário ou senha incorretos",
-            headers={"WWW-Authenticate": "Bearer"},
+        # Valida que form_data foi recebido corretamente
+        if not form_data.username or not form_data.password:
+            logger.warning("Login attempt with empty username or password")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username and password are required"
+            )
+
+        # Autentica usuário
+        logger.debug(f"Authenticating user: {form_data.username}")
+        user = auth_service.authenticate_user(db, form_data.username, form_data.password)
+
+        if not user:
+            logger.warning(f"Authentication failed for username: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Nome de usuário ou senha incorretos",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        if not user.is_active:
+            logger.warning(f"Login attempt for inactive user: {form_data.username}")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Conta de usuário está inativa"
+            )
+
+        # Cria tokens
+        logger.debug(f"Creating JWT tokens for user: {form_data.username}")
+        access_token = create_access_token(data={"sub": user.username})
+        refresh_token = create_refresh_token(data={"sub": user.username})
+
+        logger.info(f"Login successful for user: {form_data.username} (id={user.id})")
+
+        return Token(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type="bearer"
         )
 
-    if not user.is_active:
+    except HTTPException:
+        # Re-raise HTTP exceptions as-is
+        raise
+
+    except OperationalError as e:
+        # Database lock or connection error
+        logger.error(f"Database error during login for {form_data.username}: {e}", exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Conta de usuário está inativa"
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Database temporarily unavailable. Please try again."
         )
 
-    # Cria tokens
-    access_token = create_access_token(data={"sub": user.username})
-    refresh_token = create_refresh_token(data={"sub": user.username})
+    except Exception as e:
+        # Catch all other unexpected errors
+        logger.error(
+            f"Unexpected error during login for {form_data.username}: {type(e).__name__}: {e}",
+            exc_info=True
+        )
 
-    return Token(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer"
-    )
+        # In debug mode, expose error details
+        if settings.DEBUG:
+            detail = f"Internal server error: {type(e).__name__}: {str(e)}"
+        else:
+            detail = "Internal server error. Please contact support."
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=detail
+        )
 
 
 @router.post("/auth/refresh", response_model=Token)
