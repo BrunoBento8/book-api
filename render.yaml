@@ -7,8 +7,8 @@ services:
     branch: feat-adding-api
     buildCommand: |
       pip install -r requirements.txt
-      python scripts/migrate_csv_to_db.py
-      python scripts/create_admin_user.py
+      mkdir -p data
+      python scripts/init_database.py
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:
