@@ -1,14 +1,14 @@
 services:
   - type: web
     name: book-recommendation-api
-    env: python
+    runtime: python
     region: oregon
     plan: free
     branch: feat-adding-api
     buildCommand: |
       pip install -r requirements.txt
       mkdir -p data
-      python scripts/init_database.py
+      python scripts/init_database.py || echo "Warning: init_database.py failed, will retry on startup"
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/v1/health
     envVars:

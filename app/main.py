@@ -53,6 +53,57 @@ async def startup_event():
     print(f"📝 Ambiente: {settings.ENVIRONMENT}")
     print(f"📚 Documentação da API disponível em: /docs")
 
+    # Inicializa banco de dados se necessário
+    try:
+        from app.database import engine, Base
+        from sqlalchemy import inspect
+
+        inspector = inspect(engine)
+        tables = inspector.get_table_names()
+
+        if not tables or 'books' not in tables or 'users' not in tables:
+            print("⚠️  Tabelas do banco não encontradas, inicializando...")
+
+            # Cria todas as tabelas
+            Base.metadata.create_all(bind=engine)
+            print("✅ Tabelas criadas com sucesso")
+
+            # Tenta criar admin user se não existir
+            try:
+                from app.database import SessionLocal
+                from app.models.user import User
+                from app.utils.security import get_password_hash
+
+                db = SessionLocal()
+                try:
+                    admin_exists = db.query(User).filter(User.username == settings.ADMIN_USERNAME).first()
+
+                    if not admin_exists and settings.ADMIN_PASSWORD:
+                        admin = User(
+                            username=settings.ADMIN_USERNAME,
+                            email=settings.ADMIN_EMAIL,
+                            hashed_password=get_password_hash(settings.ADMIN_PASSWORD[:72]),
+                            is_admin=True,
+                            is_active=True
+                        )
+                        db.add(admin)
+                        db.commit()
+                        print(f"✅ Admin user criado: {settings.ADMIN_USERNAME}")
+                    elif admin_exists:
+                        print(f"✅ Admin user já existe: {settings.ADMIN_USERNAME}")
+                    else:
+                        print("⚠️  ADMIN_PASSWORD não configurado, admin não foi criado")
+                finally:
+                    db.close()
+            except Exception as e:
+                print(f"⚠️  Erro ao criar admin: {e}")
+        else:
+            print(f"✅ Banco de dados OK - Tabelas: {', '.join(tables)}")
+
+    except Exception as e:
+        print(f"⚠️  Erro ao verificar banco de dados: {e}")
+        print("   A API pode não funcionar corretamente sem as tabelas")
+
 
 @app.on_event("shutdown")
 async def shutdown_event():
