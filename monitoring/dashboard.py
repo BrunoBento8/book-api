@@ -11,9 +11,15 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import sys
 from pathlib import Path
+import os
+from dotenv import load_dotenv
 
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Load environment variables BEFORE importing settings
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 from app.config import settings
 

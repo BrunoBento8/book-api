@@ -412,22 +412,62 @@ print(f"Predições recebidas: {result['predictions_received']}")
 
 ### Dashboard Streamlit
 
-Para visualizar métricas em tempo real:
+O projeto inclui um dashboard interativo em tempo real construído com Streamlit e Plotly para monitorar o desempenho e uso da API.
 
+#### 🚀 Iniciar o Dashboard
+
+**Opção 1: Usando o script de inicialização (recomendado)**
+```bash
+./run_dashboard.sh
+```
+
+**Opção 2: Manualmente**
+```bash
+streamlit run monitoring/dashboard.py
+```
+
+**Opção 3: Instalação independente**
 ```bash
 cd monitoring
 pip install -r requirements.txt
 streamlit run dashboard.py
 ```
 
-O dashboard mostrará:
-- 📈 Total de requisições
-- ⚡ Tempo médio de resposta
-- ⚠️ Taxa de erro
-- 📊 Endpoints mais populares
-- 📉 Distribuição de tempo de resposta
-- 🎯 Status HTTP codes
-- 📋 Requisições recentes
+#### 📱 Acessar o Dashboard
+
+Abra seu navegador em: **http://localhost:8501**
+
+#### 📊 Métricas Disponíveis
+
+O dashboard exibe em tempo real:
+
+**KPIs Principais:**
+- 📈 **Total de Requisições** - Número total com delta da última hora
+- ⚡ **Tempo Médio de Resposta** - Média e percentil P95 em milissegundos
+- ⚠️ **Taxa de Erro** - Porcentagem de erros HTTP 4xx/5xx
+- 📚 **Estatísticas de Livros** - Total de livros e categorias
+
+**Visualizações Gráficas:**
+- 📊 **Requisições ao Longo do Tempo** - Gráfico de linha com agregação horária
+- 🎯 **Top 10 Endpoints** - Gráfico de barras dos endpoints mais acessados
+- ⚡ **Distribuição de Tempo de Resposta** - Histograma de performance
+- 📊 **Códigos HTTP** - Gráfico de pizza com distribuição de status codes
+- 📋 **Requisições Recentes** - Tabela com as últimas 20 requisições
+
+**Funcionalidades:**
+- 🔄 Botão de refresh manual
+- ⏱️ Filtros de tempo: última hora, 6h, 24h, 7 dias, todo período
+- 🎨 Coloração automática de status codes (verde=2xx, amarelo=4xx, vermelho=5xx)
+- 📊 Auto-refresh a cada 30 segundos
+- 📱 Layout responsivo otimizado para desktop
+
+#### ⚙️ Configuração
+
+O dashboard utiliza as mesmas variáveis de ambiente do arquivo `.env`:
+- `DATABASE_URL` - Conexão com o banco SQLite
+- Carregamento automático via `python-dotenv`
+
+**Nota:** Certifique-se de que a API está rodando e gerando logs para ver dados no dashboard.
 
 ---
 
@@ -460,13 +500,74 @@ start htmlcov/index.html # Windows
 
 ---
 
-## 🚀 Deploy (Render)
+## 🚀 Deploy no Render
 
-### Pré-requisitos
-- Conta no [Render](https://render.com)
-- Repositório no GitHub
+### 📚 Guias de Deploy Completos
 
-### Arquivos de Deploy
+Este projeto inclui **3 guias detalhados** para facilitar seu deploy no Render:
+
+1. **[DEPLOY_RENDER_QUICKSTART.md](DEPLOY_RENDER_QUICKSTART.md)** ⚡
+   - Guia rápido passo a passo
+   - Ideal para quem quer deploy em menos de 10 minutos
+   - Instruções diretas e objetivas
+
+2. **[DEPLOY_VISUAL_GUIDE.md](DEPLOY_VISUAL_GUIDE.md)** 🎨
+   - Diagramas e visualizações
+   - Fluxogramas do processo de deploy
+   - Entenda visualmente cada etapa
+
+3. **[DEPLOY_CHECKLIST.md](DEPLOY_CHECKLIST.md)** ✅
+   - Checklist interativo
+   - Marque cada item conforme completa
+   - Não esqueça nenhuma etapa importante
+
+### ⚡ Resumo Rápido
+
+#### Pré-requisitos
+- ✅ Conta no [Render.com](https://dashboard.render.com)
+- ✅ Repositório no GitHub
+- ✅ Arquivo `data/books.csv` no repositório (1000 livros)
+
+#### Deploy em 5 Passos
+
+1. **Conectar Repositório**
+   - Render Dashboard → New + → Web Service
+   - Conectar conta GitHub
+   - Selecionar repositório
+
+2. **Configurar Build**
+   ```bash
+   pip install -r requirements.txt && mkdir -p data && python scripts/init_database.py
+   ```
+
+3. **Configurar Start**
+   ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port $PORT
+   ```
+
+4. **Adicionar Variáveis de Ambiente**
+   - Copie do `.env.example` ou use o [guia de deploy](DEPLOY_RENDER_QUICKSTART.md)
+   - **CRÍTICO**: Configure `ADMIN_PASSWORD` como Secret
+
+5. **Adicionar Disco Persistente**
+   - Name: `data-disk`
+   - Mount Path: `/opt/render/project/src/data`
+   - Size: 1GB
+
+#### Verificação Pós-Deploy
+
+```bash
+# Health Check
+curl https://seu-app.onrender.com/api/v1/health
+
+# Swagger Docs
+open https://seu-app.onrender.com/docs
+
+# Listar Livros
+curl https://seu-app.onrender.com/api/v1/books
+```
+
+### 📝 Arquivos de Deploy
 
 **Procfile**:
 ```
