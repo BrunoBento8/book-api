@@ -109,3 +109,101 @@ async def get_scraper_status(
         "message": "Scraper status endpoint - implementation pending",
         "note": "Check application logs for detailed scraper execution history"
     }
+
+
+@router.post("/scraping/import-csv")
+async def import_csv_to_database(
+    force: bool = False,
+    current_user: User = Depends(get_current_admin_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Import books from CSV to database (Admin Only)
+
+    Forces reimportation of books from the existing CSV file.
+    Useful when the database is empty but the CSV exists.
+
+    **Parameters:**
+    - **force**: If True, deletes existing books and reimports. Default: False
+
+    **Authentication Required:**
+    - Must be logged in as an admin user
+    - Include access token in Authorization header
+
+    **Returns:**
+    - 200 OK: Import successful
+    - 400 Bad Request: CSV file not found
+    - 403 Forbidden: User is not an admin
+    """
+    import pandas as pd
+    from app.models.book import Book
+
+    try:
+        # Get CSV path
+        csv_path = Path(__file__).parent.parent.parent.parent / "data" / "books.csv"
+
+        if not csv_path.exists():
+            raise HTTPException(
+                status_code=400,
+                detail=f"CSV file not found at {csv_path}. Please run the scraper first."
+            )
+
+        # Read CSV
+        df = pd.read_csv(csv_path)
+        books_in_csv = len(df)
+
+        # Check existing books
+        existing_count = db.query(Book).count()
+
+        # If force=True, delete all existing books
+        if force and existing_count > 0:
+            db.query(Book).delete()
+            db.commit()
+            print(f"🗑️  Deleted {existing_count} existing books")
+            existing_count = 0
+
+        # If books already exist and not forcing, return info
+        if existing_count > 0:
+            return {
+                "status": "skipped",
+                "message": f"Database already contains {existing_count} books",
+                "csv_books": books_in_csv,
+                "note": "Use force=true parameter to delete and reimport all books"
+            }
+
+        # Import books from CSV
+        imported_count = 0
+        for _, row in df.iterrows():
+            book = Book(
+                id=int(row['id']),
+                title=str(row['title']),
+                price=float(row['price']),
+                rating=int(row['rating']),
+                availability=int(row['availability']),
+                category=str(row['category']),
+                image_url=str(row['image_url']) if pd.notna(row['image_url']) else None
+            )
+            db.add(book)
+            imported_count += 1
+
+        db.commit()
+
+        # Invalidate stats cache
+        stats_service.invalidate_cache()
+
+        return {
+            "status": "success",
+            "message": f"Successfully imported {imported_count} books from CSV",
+            "imported": imported_count,
+            "csv_books": books_in_csv,
+            "triggered_by": current_user.username
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error importing CSV: {str(e)}"
+        )
