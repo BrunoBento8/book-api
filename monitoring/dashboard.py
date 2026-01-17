@@ -49,27 +49,58 @@ if st.button("🔄 Refresh Data"):
 # Fetch data
 @st.cache_data(ttl=30)  # Cache for 30 seconds
 def load_api_logs():
-    query = """
-    SELECT * FROM api_logs
-    ORDER BY timestamp DESC
-    LIMIT 1000
-    """
-    return pd.read_sql(query, engine)
+    try:
+        query = """
+        SELECT * FROM api_logs
+        ORDER BY timestamp DESC
+        LIMIT 1000
+        """
+        return pd.read_sql(query, engine)
+    except Exception as e:
+        # Return empty DataFrame if table doesn't exist yet
+        return pd.DataFrame(columns=['timestamp', 'method', 'endpoint', 'status_code', 'response_time'])
 
 @st.cache_data(ttl=30)
 def load_books_stats():
-    query = """
-    SELECT
-        COUNT(*) as total_books,
-        AVG(price) as avg_price,
-        COUNT(DISTINCT category) as total_categories
-    FROM books
-    """
-    return pd.read_sql(query, engine)
+    try:
+        query = """
+        SELECT
+            COUNT(*) as total_books,
+            AVG(price) as avg_price,
+            COUNT(DISTINCT category) as total_categories
+        FROM books
+        """
+        return pd.read_sql(query, engine)
+    except Exception as e:
+        # Return default values if table doesn't exist
+        return pd.DataFrame({
+            'total_books': [0],
+            'avg_price': [0.0],
+            'total_categories': [0]
+        })
 
 try:
     logs_df = load_api_logs()
     books_stats = load_books_stats()
+
+    # Check if database is empty
+    if len(logs_df) == 0:
+        st.warning("""
+        ⚠️ **No API logs found yet**
+
+        The monitoring dashboard is ready, but no API requests have been logged yet.
+
+        **To populate the dashboard:**
+        1. Make some requests to your API endpoints
+        2. The logs will appear automatically
+        3. Use the refresh button or wait for auto-refresh
+
+        **Example API calls:**
+        - `GET /api/v1/books` - List all books
+        - `GET /api/v1/health` - Health check
+        - `GET /api/v1/categories` - List categories
+        """)
+        st.info("📊 Dashboard will auto-refresh every 30 seconds to check for new data")
 
     # Sidebar - Time filter
     st.sidebar.header("⏱️ Time Filter")
